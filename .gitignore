@@ -1,3 +1,5 @@
 *pyc
 *build
 venv*
+dist
+django_dcors.egg-info/

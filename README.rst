@@ -1,7 +1,14 @@
-from django import http
-from django.conf import settings
+Django CORS
+===========
 
-"""Django middleware module for handling CORS HTTP headers.
+The package ``dcors`` is a Django middleware for enabling Cross-Origin Resource
+Sharing (CORS).
+
+Install  the module using::
+
+  pip install django-dcors
+
+Code is available at https://github.com/prasanthn/django-dcors .
 
 Values specified in the Django settings module are used to set appropriate
 headers in HTTP responses. These headers are added to all responses.
@@ -54,55 +61,5 @@ See https://developer.mozilla.org/en-US/docs/HTTP/Access_control_CORS for more
 information on CORS. Web browsers that support CORS can be found at
 http://caniuse.com/#search=cors .
 
-"""
-
-
-class CorsMiddleware(object):
-    """Django middleware to enable CORS support.
-    """
-    def set_headers(self, response, request):
-        CORS_ALLOW_ORIGIN = getattr(settings, "CORS_ALLOW_ORIGIN", '')
-        CORS_ALLOW_METHODS = getattr(settings, "CORS_ALLOW_METHODS", [])
-        CORS_ALLOW_HEADERS = getattr(settings, "CORS_ALLOW_HEADERS", [])
-        CORS_ALLOW_CREDENTIALS = getattr(settings, "CORS_ALLOW_CREDENTIALS", "false")
-        CORS_EXPOSE_HEADERS = getattr(settings, "CORS_EXPOSE_HEADERS", [])
-        CORS_MAX_AGE = getattr(settings, "CORS_MAX_AGE", 0)
-
-        # A shortcut to allow CORS for all domains.
-        if getattr(settings, "CORS_ALLOW_ALL_ORIGIN", None):
-            CORS_ALLOW_ORIGIN = request.META.get("HTTP_ORIGIN")
-        # A shortcut to allow all headers in a CORS request.
-        if getattr(settings, "CORS_ALLOW_ALL_HEADERS", None):
-            CORS_ALLOW_HEADERS = request.META.get("HTTP_ACCESS_CONTROL_REQUEST_HEADERS")
-
-        response['Access-Control-Allow-Origin'] = CORS_ALLOW_ORIGIN
-        response['Access-Control-Allow-Methods'] = ",".join(CORS_ALLOW_METHODS)
-        response['Access-Control-Allow-Headers'] = ",".join(CORS_ALLOW_HEADERS)
-        response['Access-Control-Allow-Credentials'] = CORS_ALLOW_CREDENTIALS
-        response['Access-Control-Expose-Headers'] = ",".join(CORS_EXPOSE_HEADERS)
-        response['Access-Control-Max-Age'] = CORS_MAX_AGE
-
-        return response
-
-    def process_request(self, request):
-        """If 'preflight' request then simple return all CORS settings."""
-        if request.method == 'OPTIONS' and 'HTTP_ACCESS_CONTROL_REQUEST_METHOD' in request.META:
-            response = http.HttpResponse()
-            return self.set_headers(response, request)
-
-        return None
-
-    def process_response(self, request, response):
-        """Add headers to response.
-
-        If Access-Control-Allow-Origin is already present then no action is taken.
-        """
-        # Assume that these headers have been set somewhere else.
-        # For example, in the response to a preflight request as above.
-        if response.has_header('Access-Control-Allow-Origin'):
-            return response
-
-        # Not all requests will be preceded by a preflight request. So include
-        # all headers. The credentials header is required when a credentialed
-        # get request is made; get requests are usually not "preflighted".
-        return self.set_headers(response, request)
+Tests are present in dcors/tests.py, and have been tested with Django 1.4.5 and
+1.5.1 in Python 2.7.3 .
